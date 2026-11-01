@@ -1,0 +1,233 @@
+# Step 1: Data load garne
+bagmati <- read.csv("data/raw/bagmati_raw_inventory.csv")
+head(bagmati)
+tail(bagmati)
+names(bagmati)   # column names
+str(bagmati)   # data ko structure ra type herna
+
+min(bagmati$DBH_cm, na.rm = TRUE)
+max(bagmati$DBH_cm, na.rm = TRUE)
+
+# Correct minimum and maximum values
+
+
+# # Step 2: Row 17 ko error hernu ra milaunu
+# print(bagmati[14, ])   # 17 aum row herna
+# print(bagmati[bagmati$Plot_ID == "P14" & bagmati$Tree_ID == "T203", ])   # P14 ko T203 rukh khojna
+
+# row17 <- which(bagmati$Plot_ID == "P14" & bagmati$Tree_ID == "T203")   # tyo rukh kun row ma xa patta lagauna
+# bagmati$DBH_cm[row17] <- 29.9   # 999 galti lekhiyeko thiyo, sahi DBH 29.9 cm rakhne
+# print(bagmati[row17, ])   # sachiyo ki nai check garna
+
+# # Step 3: Decimal error patta lagaune function
+# detect_decimal_error <- function(dbh_cm, max_valid = 150) {
+#   bad <- which(dbh_cm > max_valid & dbh_cm < 900)   # 150 bhanda thulo DBH khojna (999 code ho, error haina)
+#   cat("Decimal errors found:", length(bad), "\n")   # kati wota error xa dekhauna
+#   dbh_cm[bad] <- dbh_cm[bad] / 10   # mm ma lekheko lai cm banauna 10 le bhag garne
+#   return(dbh_cm)
+# }
+# bagmati$DBH_cm <- detect_decimal_error(bagmati$DBH_cm)   # sachiyeko DBH le column overwrite garne
+
+# # Step 4: -99 ra 999 code lai NA banaune, ani ramro row matra rakhne
+# bagmati$DBH_cm[which(bagmati$DBH_cm == -99 | bagmati$DBH_cm == 999)] <- NA   # DBH ko code lai NA banauna
+# bagmati$Height_m[which(bagmati$Height_m == -99)] <- NA   # height ko -99 lai NA banauna
+
+# bagmati_clean <- bagmati[!is.na(bagmati$DBH_cm) & bagmati$DBH_cm > 0, ]   # NA ra 0 bhanda sano DBH hataune
+# cat("Clean rows:", nrow(bagmati_clean), "\n")   # saf data ma kati row baki xa herna
+
+# # Step 5: Tin wota formula lagaune
+# # Formula 1: Basal area nikalna (m2)
+# bagmati_clean$ba_m2 <- pi * bagmati_clean$DBH_cm^2 / 40000
+
+# # Formula 2: Volume nikalna (m3) = basal area * height * 0.5
+# bagmati_clean$volume_m3 <- bagmati_clean$ba_m2 * bagmati_clean$Height_m * 0.5
+
+# # Formula 3: DBH ko CV% nikalna (rukh ko size kati farak xa bhanne herna)
+# cv_dbh <- sd(bagmati_clean$DBH_cm, na.rm = TRUE) /
+#           mean(bagmati_clean$DBH_cm, na.rm = TRUE) * 100
+
+# cat("Total basal area (m2):", sprintf("%.4f", sum(bagmati_clean$ba_m2, na.rm = TRUE)), "\n")   # jamma basal area
+# cat("Total volume (m3):", sprintf("%.4f", sum(bagmati_clean$volume_m3, na.rm = TRUE)), "\n")   # jamma volume
+# cat("CV% of DBH:", round(cv_dbh, 2), "\n")   # CV% dekhauna
+# head(bagmati_clean)   # pahila ko 6 row ra naya column herna
+
+# # Step 6: Safa gareko data processed folder ma save garne (raw file chalaunu hudaina)
+# write.csv(bagmati_clean, "data/processed/bagmati_clean.csv", row.names = FALSE)
+
+
+#  File padhna lai
+bagmati <- read.csv("data/raw/bagmati_raw_inventory.csv")
+
+#  Data herna
+head(bagmati)  # pahila ko 6 row herna
+str(bagmati)           # structure ra data type herna
+cat("Total rows:", nrow(bagmati), "\n")       # kati row xa dekhauna
+cat("Total columns:", ncol(bagmati), "\n")    # kati column xa dekhauna
+print(names(bagmati))  # column ko naam herna
+
+# Step 3: Harek column integer ho ki haina check garne
+for (col in names(bagmati)) {
+  x <- bagmati[[col]]
+  if (is.numeric(x)) {
+    whole <- all(x == round(x), na.rm = TRUE)   # sabai value purna sankhya ho ki nai
+    cat(col, "| class:", class(x), "| typeof:", typeof(x),
+        "| sabai purna sankhya?:", whole, "\n")
+  } else {
+    cat(col, "| class:", class(x), "(text, number haina)\n")
+  }
+}
+
+# Step 4: Negative number xa ki xaina check garne
+cat("DBH_cm ma negative:", sum(bagmati$DBH_cm < 0, na.rm = TRUE), "\n")
+cat("Height_m ma negative:", sum(bagmati$Height_m < 0, na.rm = TRUE), "\n")
+
+# Negative bhayeko row haru dekhaune
+print(bagmati[which(bagmati$DBH_cm < 0), c("Plot_ID", "Tree_ID", "Species", "DBH_cm", "Height_m")])
+print(bagmati[which(bagmati$Height_m < 0), c("Plot_ID", "Tree_ID", "Species", "DBH_cm", "Height_m")])
+
+
+
+# =========================================================
+# STEP 1: File padhne (data R ma lyaune)
+# =========================================================
+bagmati <- read.csv("data/raw/bagmati_raw_inventory.csv")   # CSV file lai "bagmati" naam ma rakhne
+
+
+# =========================================================
+# STEP 2: Data ko bare ma basic jankari line
+# =========================================================
+print(head(bagmati))          # pahila ko 6 wota row herna
+print(tail(bagmati))          # antim ko 6 wota row herna
+
+cat("Total rows:", nrow(bagmati), "\n")      # jamma kati row (rukh) xa
+cat("Total columns:", ncol(bagmati), "\n")   # jamma kati column xa
+
+print(names(bagmati))         # sabai column ko naam herna (thulo/sano akshar dhyan dine)
+
+str(bagmati)                  # harek column ko type ra pahila ko value haru herna
+
+
+# =========================================================
+# STEP 3: Text column check garne (yi number haina)
+# =========================================================
+cat("Plot_ID:", class(bagmati$Plot_ID), "\n")                     # plot ko naam: text hunu parxa
+cat("Stand_ID:", class(bagmati$Stand_ID), "\n")                   # stand ko naam: text
+cat("Tree_ID:", class(bagmati$Tree_ID), "\n")                     # rukh ko ID: text
+cat("Species:", class(bagmati$Species), "\n")                     # species ko naam: text
+cat("Measurement_Date:", class(bagmati$Measurement_Date), "\n")   # miti: text
+
+
+# =========================================================
+# STEP 4: Number column integer ho ki decimal ho check garne
+# integer = purna sankhya (jastai 1420)
+# numeric/double = dasamlav bhayeko sankhya (jastai 45.2)
+# =========================================================
+
+# DBH (rukh ko golai, cm)
+cat("DBH_cm -> class:", class(bagmati$DBH_cm), "| typeof:", typeof(bagmati$DBH_cm), "\n")
+
+# Height (rukh ko uchai, m)
+cat("Height_m -> class:", class(bagmati$Height_m), "| typeof:", typeof(bagmati$Height_m), "\n")
+
+# Wood density
+cat("Wood_density -> class:", class(bagmati$Wood_density), "| typeof:", typeof(bagmati$Wood_density), "\n")
+
+# Biomass (kg)
+cat("Biomass_kg -> class:", class(bagmati$Biomass_kg), "| typeof:", typeof(bagmati$Biomass_kg), "\n")
+
+# Plot area (hectare)
+cat("Plot_area_ha -> class:", class(bagmati$Plot_area_ha), "| typeof:", typeof(bagmati$Plot_area_ha), "\n")
+
+# Elevation (m)
+cat("Elevation_m -> class:", class(bagmati$Elevation_m), "| typeof:", typeof(bagmati$Elevation_m), "\n")
+
+# Latitude ra Longitude
+cat("Latitude -> class:", class(bagmati$Latitude), "| typeof:", typeof(bagmati$Latitude), "\n")
+cat("Longitude -> class:", class(bagmati$Longitude), "| typeof:", typeof(bagmati$Longitude), "\n")
+
+# Census year
+cat("Census_Year -> class:", class(bagmati$Census_Year), "| typeof:", typeof(bagmati$Census_Year), "\n")
+
+==
+# STEP 5: Khali (NA) value kati xa check garne
+# =========================================================
+cat("DBH_cm ma NA:", sum(is.na(bagmati$DBH_cm)), "\n")       # DBH napna nasakeko kati wota
+cat("Height_m ma NA:", sum(is.na(bagmati$Height_m)), "\n")   # height napna nasakeko kati wota
+
+
+# =========================================================
+# STEP 6: Negative number xa ki xaina check garne
+# (rukh ko DBH ra height kahile pani negative hunna)
+# =========================================================
+
+# DBH ma negative kati wota xa
+cat("DBH_cm ma negative:", sum(bagmati$DBH_cm < 0, na.rm = TRUE), "\n")
+
+# DBH ma zero kati wota xa (zero pani hunu mildaina)
+cat("DBH_cm ma zero:", sum(bagmati$DBH_cm == 0, na.rm = TRUE), "\n")
+
+# Height ma negative kati wota xa
+cat("Height_m ma negative:", sum(bagmati$Height_m < 0, na.rm = TRUE), "\n")
+
+
+# =========================================================
+# STEP 7: Negative bhayeko row haru dekhaune
+# =========================================================
+
+# DBH negative bhayeko rukh haru
+neg_dbh <- which(bagmati$DBH_cm < 0)    # kun kun row ma DBH negative xa
+cat("DBH negative bhayeko row number:", neg_dbh, "\n")
+print(bagmati[neg_dbh, c("Plot_ID", "Tree_ID", "Species", "DBH_cm", "Height_m")])
+
+# Height negative bhayeko rukh haru
+neg_height <- which(bagmati$Height_m < 0)   # kun kun row ma height negative xa
+cat("Height negative bhayeko row number:", neg_height, "\n")
+print(bagmati[neg_height, c("Plot_ID", "Tree_ID", "Species", "DBH_cm", "Height_m")])
+
+
+# =========================================================
+# STEP 8: -99 ra 999 code kati wota xa check garne
+# (-99 ra 999 = field ma napna nasakeko code, sacho value haina)
+# =========================================================
+cat("DBH_cm == -99:", sum(bagmati$DBH_cm == -99, na.rm = TRUE), "\n")
+cat("DBH_cm == 999:", sum(bagmati$DBH_cm == 999, na.rm = TRUE), "\n")
+cat("Height_m == -99:", sum(bagmati$Height_m == -99, na.rm = TRUE), "\n")
+
+
+# =========================================================
+# STEP 9: Dohoriyeko (duplicate) rukh check garne
+# =========================================================
+dup <- duplicated(bagmati[, c("Plot_ID", "Tree_ID")])   # eutai plot ma eutai tree ID dui choti xa ki
+cat("Duplicate rows:", sum(dup), "\n")
+print(bagmati[dup, c("Plot_ID", "Tree_ID", "DBH_cm", "Height_m")]) 
+
+
+
+
+
+#data 
+#load garna ra basic herni
+bagmati <- read.csv("data/raw/bagmati_raw_inventory.csv")
+head(bagmati) #paila ko 6 wota row dekhauxa
+tail(bagmati) #last ko 6 wota row dekhuaxa
+names(bagmati) columns ahru ko name dekhauxa 
+str(bagmati) #data ko structure ra type dekhauxa
+nrow(bagmati) #total row ko no dekhauxa
+ncol(bagmati) #total column ko no dekhauxa
+class(bagmati)
+
+unique(bagmati$Species)
+
+bagmati$Species <- ifelse(bagmati$Species == "S. robusta", "Shorea robusta", bagmati$Species)
+bagmati$Species <- ifelse(bagmati$Species == "Shorea rubusta", "Shorea robusta", bagmati$Species)
+
+unique(bagmati$Species)
+
+bagmati$
+
+
+bagmati[bagmati$DBH_cm < 0,c("Stand_ID","Tree_ID","Species","DBH_cm","Height_m")] 
+bagmati[bagmati$Species=="S. robusta", c("Species")]
+sum(bagmati$DBH_cm < 0 | bagmati$DBH_cm > 150, na.rm = TRUE)
+sum(bagmati$Height_m <0 | bagmati$Height_m > 50, na.rm = TRUE)
+bagmati[bagmati$Height_m < 0, c("Stand_ID","Tree_ID","Species","DBH_cm","Height_m")]
