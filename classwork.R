@@ -1,4 +1,5 @@
 # #user bata input lina 
+#naya 
 # dbh_cm <- readline(prompt= "enter dbh in cm: ")
 # dbh_cm <- strsplit(dbh_cm, ",")[[1]]
 # dbh_cm <- as.numeric(dbh_cm)
